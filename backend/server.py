@@ -7,7 +7,7 @@ import json
 import os
 import uuid
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 
 app = FastAPI()
 
@@ -20,12 +20,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB connection
+# MongoDB connection with fallback
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017/tictactoe')
-client = MongoClient(MONGO_URL)
-db = client.tictactoe
-games_collection = db.games
-rooms_collection = db.rooms
+try:
+    client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+    # Test connection
+    client.admin.command('ping')
+    db = client.tictactoe
+    games_collection = db.games
+    rooms_collection = db.rooms
+    print("✅ Connected to MongoDB")
+except Exception as e:
+    print(f"⚠️  MongoDB not available: {e}")
+    print("🔄 Using in-memory storage for testing")
+    # Fallback to in-memory storage
+    rooms_collection = None
+    games_collection = None
+
+# In-memory storage fallback
+in_memory_rooms = {}
 
 # Models
 class GameState(BaseModel):
@@ -204,21 +217,32 @@ async def create_room():
     room_data = {
         "room_id": room_id,
         "players": [],
-        "game_state": game_state.dict(),
-        "created_at": datetime.utcnow()
+        "game_state": game_state.model_dump(),
+        "created_at": datetime.now(timezone.utc)
     }
     
-    rooms_collection.insert_one(room_data)
+    # Use MongoDB if available, otherwise in-memory storage
+    if rooms_collection is not None:
+        rooms_collection.insert_one(room_data)
+    else:
+        in_memory_rooms[room_id] = room_data
+    
     return {"room_id": room_id}
 
 @app.get("/api/room/{room_id}")
 async def get_room(room_id: str):
-    room = rooms_collection.find_one({"room_id": room_id})
-    if not room:
-        raise HTTPException(status_code=404, detail="Room not found")
-    
-    room["_id"] = str(room["_id"])
-    return room
+    if rooms_collection is not None:
+        room = rooms_collection.find_one({"room_id": room_id})
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+        room["_id"] = str(room["_id"])
+        return room
+    else:
+        # Use in-memory storage
+        room = in_memory_rooms.get(room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+        return room
 
 @app.post("/api/ai-move")
 async def make_ai_move(board: List[List[str]], difficulty: str = "hard"):

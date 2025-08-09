@@ -62,8 +62,8 @@ The project follows a **dual-frontend architecture** with a robust backend:
 ## **Getting Started**
 
 ### **Prerequisites**
-- Python 3.8+
-- Node.js 16+
+- Python 3.8-3.12 (Python 3.13 may have compatibility issues with some dependencies)
+- Node.js 16-22 (Node.js 23+ may show warnings but will work)
 - MongoDB (local or cloud instance)
 
 ### **Backend Setup**
@@ -116,6 +116,50 @@ See `test_result.md` for detailed test results.
 - **Frontend**: Configured for GitHub Pages deployment
 - **Backend**: Ready for deployment with Uvicorn/Gunicorn
 
+<<<<<<< HEAD
+=======
+## **Troubleshooting**
+
+### **Python 3.13 Compatibility Issues**
+If you encounter pydantic-core build errors with Python 3.13:
+
+**Option 1: Use Python 3.12 (Recommended)**
+```bash
+# Using pyenv
+pyenv install 3.12.7
+pyenv local 3.12.7
+pip install -r requirements.txt
+```
+
+**Option 2: Try installing with pre-compiled wheels**
+```bash
+pip install --only-binary=all -r requirements.txt
+```
+
+**Option 3: Install dependencies individually**
+```bash
+pip install fastapi uvicorn websockets pymongo python-dotenv python-multipart
+pip install pydantic --pre  # Install pre-release version
+```
+
+### **Node.js 23+ Warnings**
+If you see Jest/testing library warnings with Node.js 23+, these are harmless:
+```bash
+# Option 1: Ignore warnings (they're just compatibility notices)
+npm install --no-warnings
+
+# Option 2: Use Node.js 22 LTS (recommended for production)
+nvm install 22
+nvm use 22
+npm install
+```
+
+### **Common Issues**
+- **MongoDB Connection**: Ensure MongoDB is running and accessible
+- **Port Conflicts**: Backend runs on port 8001, ensure it's available
+- **CORS Issues**: Check that frontend URL is in CORS allowed origins
+
+>>>>>>> a9fffc5d (feat: Add comprehensive project documentation and improve multiplayer functionality)
 ## **Contributing**
 
 This project demonstrates both educational value (simple vanilla JS version) and production-ready features (React frontend, robust backend with AI and multiplayer support).
