@@ -29,4 +29,17 @@ h1{
   height: 120px;
   width:120px;
   border: 2px solid #FFFF00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cellValue {
+  font-size: 60px;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+  text-shadow: none;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
 }
